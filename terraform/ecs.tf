@@ -65,6 +65,7 @@ resource "huaweicloud_compute_instance" "executor" {
   admin_pass         = var.default_password
   security_group_ids = [huaweicloud_networking_secgroup.executor.id]
   availability_zone  = var.availability_zone
+  agency_name        = huaweicloud_identity_agency.executor.name
 
   system_disk_type = "SAS"
   system_disk_size = 40

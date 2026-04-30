@@ -3,8 +3,26 @@ resource "huaweicloud_codearts_project" "iac" {
   type = "scrum"
 }
 
-output "codearts_project-iac" {
-  value = huaweicloud_codearts_project.iac
+resource "huaweicloud_identityv5_policy" "executor" {
+  name            = "iac-executor-policy"
+  policy_document = jsonencode(
+    {
+      "Version": "5.0",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "sts::setSourceIdentity",
+            "sts::tagSession",
+            "sts:agencies:assume"
+          ]
+        }
+      ]
+    })
 }
 
-# TODO: create IAM Agency for ecs-executor
+resource "huaweicloud_identity_agency" "executor" {
+  name                  = "iac-executor-agency"
+  delegated_domain_name = "op_svc_ecs"
+  domain_roles          = ["iac-executor-policy"]
+}
