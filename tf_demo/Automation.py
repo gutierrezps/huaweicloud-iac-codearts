@@ -1,7 +1,7 @@
 import requests
 import os
 from subprocess import Popen, PIPE, STDOUT
-import sys
+from argparse import ArgumentParser
 
 from apig_sdk import signer
 
@@ -16,7 +16,9 @@ def run_terraform_command(args: list[str]):
     tf_process.wait()
     return_code = tf_process.poll()
     if return_code != 0:
-        print(f"Failed to execute terraform command:{args}, return code: {return_code}\n")
+        msg = f"Failed to execute terraform command: {args}"
+        msg += f", return code: {return_code}\n"
+        print(msg)
         exit(1)
 
 
@@ -36,10 +38,36 @@ def get_ecs_agency_token():
     return ecs_agency_ak, ecs_agency_sk, ecs_agency_token
 
 
+def replace_arguments(filename: str, **kwargs):
+    contents = ""
+
+    with open(filename) as f:
+        contents = f.read()
+
+    for placeholder, value in kwargs.items():
+        contents = contents.replace(f"{placeholder}_PLACEHOLDER", value)
+
+    output_filename = filename.replace("_template", "")
+    with open(output_filename, 'w') as f:
+        f.write(contents)
+
+
 if __name__ == "__main__":
-    # Usage: python Automation.py [action_type]
-    # action_type: Optional - Can be 'plan' (default), 'apply', 'plan_destroy' or 'destroy'
-    action_type = sys.argv[1] if len(sys.argv) > 1 else "plan"
+    parser = ArgumentParser()
+
+    parser.add_argument(
+        "action_type",
+        choices=["plan", "apply", "plan_destroy", "destroy"]
+        )
+
+    parser.add_argument(
+        "-b", "--bucket_name", default=None,
+        help="OBS bucket name to store state file remotely"
+    )
+
+    args = vars(parser.parse_args())
+    action_type = args['action_type']
+    bucket_name = args['bucket_name']
 
     ecs_agency_ak, ecs_agency_sk, ecs_agency_token = get_ecs_agency_token()
 
@@ -53,6 +81,13 @@ if __name__ == "__main__":
     os.environ["AWS_SESSION_TOKEN"] = ecs_agency_token
     os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
     os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
+
+    if bucket_name is not None:
+        replace_arguments("remote_state.tf_template", BUCKET_NAME=bucket_name)
+    else:
+        if os.path.exists("remote_state.tf"):
+            os.remove("remote_state.tf")
+            run_terraform_command(["init", "-migrate-state"])
 
     run_terraform_command(["init", "-upgrade"])
 
