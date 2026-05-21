@@ -7,13 +7,13 @@ implement an Infrastructure as Code (IaC) pipeline in Huawei Cloud CodeArts.
 
 ### Infrastructure
 
-First, create the resources using the code inside `terraform` folder.
+First, create the resources using the code inside `tf_executor` folder.
 
 Requirements:
 
 - Terraform installed - <https://developer.hashicorp.com/terraform/downloads>
 
-Follow the steps below inside `terraform` folder:
+Follow the steps below inside `tf_executor` folder:
 
 1. Make a copy of `terraform.tfvars.example` named `terraform.tfvars` and
    set AK, SK and passwords;
