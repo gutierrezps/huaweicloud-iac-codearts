@@ -1,6 +1,6 @@
 terraform {
   backend "s3" {
-    bucket    = "BUCKET_NAME"
+    bucket    = "BUCKET_NAME_PLACEHOLDER"
     key       = "terraform.tfstate"
     region    = "sa-brazil-1"
     endpoints = {
