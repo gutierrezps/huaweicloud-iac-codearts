@@ -38,7 +38,7 @@ def get_ecs_agency_token():
 
 if __name__ == "__main__":
     # Usage: python Automation.py [action_type]
-    # action_type: Optional - Can be 'plan' (default) or 'apply'
+    # action_type: Optional - Can be 'plan' (default), 'apply', 'plan_destroy' or 'destroy'
     action_type = sys.argv[1] if len(sys.argv) > 1 else "plan"
 
     ecs_agency_ak, ecs_agency_sk, ecs_agency_token = get_ecs_agency_token()
@@ -47,9 +47,20 @@ if __name__ == "__main__":
     os.environ["HW_SECRET_KEY"] = ecs_agency_sk
     os.environ["HW_SECURITY_TOKEN"] = ecs_agency_token
 
+    # used by remote state
+    os.environ["AWS_ACCESS_KEY_ID"] = ecs_agency_ak
+    os.environ["AWS_SECRET_ACCESS_KEY"] = ecs_agency_sk
+    os.environ["AWS_SESSION_TOKEN"] = ecs_agency_token
+    os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
+    os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
+
     run_terraform_command(["init", "-upgrade"])
 
     if action_type == "apply":
         run_terraform_command(["apply", "-auto-approve"])
+    elif action_type == "plan_destroy":
+        run_terraform_command(["plan", "-destroy"])
+    elif action_type == "destroy":
+        run_terraform_command(["destroy", "-auto-approve"])
     else:
         run_terraform_command(["plan"])
