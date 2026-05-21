@@ -42,3 +42,5 @@ output/*
 
 .env
 **/*.pyc
+
+remote_state.tf
