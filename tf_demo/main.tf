@@ -44,3 +44,12 @@ resource "huaweicloud_vpc_network_acl" "main" {
     subnet_id = huaweicloud_vpc_subnet.main.id
   }
 }
+
+data "huaweicloud_account" "current" {}
+
+output "current_account" {
+  value = {
+    domain_id = data.huaweicloud_account.current.id
+    domain_name = data.huaweicloud_account.current.name
+  }
+}
