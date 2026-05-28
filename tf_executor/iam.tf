@@ -18,7 +18,7 @@ resource "huaweicloud_identityv5_policy" "executor" {
             "iam:tokens:assume"
           ],
           "Resource": [
-            "iam::*:agencies:iac-sts-demo-agency",
+            "iam::*:agencies:iac-intermediate-agency",
             "iam::*:agencies:iac-access-agency",
           ]
         },
@@ -55,6 +55,14 @@ resource "huaweicloud_identity_agency" "executor" {
 
   # Go to new IAM console and manually attach the "iac-executor-policy-v5"
   # identity policy to this agency
+
+  lifecycle {
+    ignore_changes = [
+      # Issue on v1.91.0, where this legacy argument is always updated to
+      # "null" when delegating access to a cloud service like ECS (op_svc_ecs)
+      delegated_service_name
+    ]
+  }
 }
 
 resource "huaweicloud_identity_agency" "intermediate" {
@@ -66,4 +74,8 @@ resource "huaweicloud_identity_agency" "intermediate" {
 
   # Go to new IAM console and manually attach the "iac-executor-policy-v5"
   # identity policy to this agency
+
+  # This agency is not required to operate other accounts. Its purpose is to
+  # demonstrate a complex scenario where the target account cannot be operated
+  # directly by the Terraform executor account
 }

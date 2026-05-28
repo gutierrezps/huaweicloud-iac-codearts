@@ -21,6 +21,13 @@ Follow the steps below inside `tf_executor` folder:
 3. Run `terraform plan` to check what will be done;
 4. Run `terraform apply` to provision the infrastructure.
 
+As of 2026-05-21, Terraform provider v1.91.0 does not have a way to attach an
+Identity Policy to an Agency.
+
+Go to new IAM console and manually attach the "iac-executor-policy-v5"
+identity policy to agencies "iac-executor-agency" and
+"iac-intermediate-agency".
+
 ### Demo infrastructure
 
 The `tf_demo` folder contains Terraform code for a simple cloud infrastructure
@@ -82,6 +89,20 @@ python3 Automation.py $ACTION
    should be displayed in the list, with status **Idle**.
 
    ![Newly added agent, with status "Idle"](docs/new-agent-added.jpg)
+
+## Troubleshooting
+
+If you get an error message like the following:
+
+```plain
+"User: sts::***:assumed-agency:iac-intermediate-agency/automation_agency_session
+is not authorized to perform: iam:tokens:assume on resource:
+IAM::***:agencies:iac-access-agency because no identity-based policy allows
+the iam:tokens:assume action.
+```
+
+Check if you manually authorized the `iac-executor-policy-v5` for the
+`iac-intermediate-agency` and for the `iac-executor-agency`.
 
 ## References
 
