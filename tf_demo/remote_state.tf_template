@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
     bucket    = "BUCKET_NAME_PLACEHOLDER"
-    key       = "terraform.tfstate"
+    key       = "DOMAIN_NAME_PLACEHOLDER/terraform.tfstate"
     region    = "sa-brazil-1"
     endpoints = {
       s3 = "https://obs.sa-brazil-1.myhuaweicloud.com"

@@ -3,7 +3,7 @@ import os
 from subprocess import Popen, PIPE, STDOUT
 from argparse import ArgumentParser
 
-from apig_sdk import signer
+import shutil
 
 URL_TO_GET_AGENCY_TOKEN = "http://169.254.169.254/openstack/latest/securitykey"
 
@@ -65,9 +65,15 @@ if __name__ == "__main__":
         help="OBS bucket name to store state file remotely"
     )
 
+    parser.add_argument(
+        "-a", "--account_name", default=None,
+        help="Huawei Cloud account name to deploy resources"
+    )
+
     args = vars(parser.parse_args())
     action_type = args['action_type']
     bucket_name = args['bucket_name']
+    domain_name = args['account_name']
 
     ecs_agency_ak, ecs_agency_sk, ecs_agency_token = get_ecs_agency_token()
 
@@ -82,8 +88,16 @@ if __name__ == "__main__":
     os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
     os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
 
+    os.environ["HW_ASSUME_ROLE_DOMAIN_NAME"] = domain_name
+
+    if os.path.exists(".terraform"):
+        shutil.rmtree(".terraform")
+
     if bucket_name is not None:
-        replace_arguments("remote_state.tf_template", BUCKET_NAME=bucket_name)
+        replace_arguments(
+            "remote_state.tf_template",
+            BUCKET_NAME=bucket_name,
+            DOMAIN_NAME=domain_name)
     else:
         if os.path.exists("remote_state.tf"):
             os.remove("remote_state.tf")

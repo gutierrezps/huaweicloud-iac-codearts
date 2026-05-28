@@ -14,6 +14,11 @@ provider "huaweicloud" {
   region     = "sa-brazil-1"
   # set environment variables:
   # HW_ACCESS_KEY, HW_SECRET_KEY, HW_SECURITY_TOKEN
+
+  assume_role {
+    agency_name = "iac-access-agency"
+    # domain_name = HW_ASSUME_ROLE_DOMAIN_NAME environment variable
+  }
 }
 
 resource "huaweicloud_vpc" "main" {
