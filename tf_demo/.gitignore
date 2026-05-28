@@ -44,3 +44,4 @@ output/*
 **/*.pyc
 
 remote_state.tf
+providers.tf

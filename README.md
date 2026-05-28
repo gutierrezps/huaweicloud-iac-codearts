@@ -21,6 +21,26 @@ Follow the steps below inside `tf_executor` folder:
 3. Run `terraform plan` to check what will be done;
 4. Run `terraform apply` to provision the infrastructure.
 
+### Demo infrastructure
+
+The `tf_demo` folder contains Terraform code for a simple cloud infrastructure
+that can be deployed in multiple accounts.
+
+Instead of running Terraform commands directly, run the two Python scripts as
+follows:
+
+```sh
+# 1. Prepare the Terraform code:
+# - $BUCKET_NAME is the OBS bucket where Terraform state files are stored
+# - $ACCOUNT_NAME is the account name where the resources will be deployed
+python3 PrepareVariables.py -b $BUCKET_NAME -a $ACCOUNT_NAME
+
+# 2. Run Terraform:
+# - $ACTION can be plan, apply, plan_destroy (plan -destroy) or destroy.
+#     No confirmation is requested for apply or destroy actions.
+python3 Automation.py $ACTION
+```
+
 ### CodeArts
 
 1. Create an Agent Pool: <https://support.huaweicloud.com/intl/en-us/usermanual-devcloud/devcloud_01_0016.html>

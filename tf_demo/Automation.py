@@ -1,11 +1,17 @@
-import requests
+import json
 import os
-from subprocess import Popen, PIPE, STDOUT
 from argparse import ArgumentParser
+from subprocess import PIPE, STDOUT, Popen
 
-import shutil
+import requests
+from apig_sdk import signer
 
 URL_TO_GET_AGENCY_TOKEN = "http://169.254.169.254/openstack/latest/securitykey"
+
+# URN of intermediate agency, used to obtain the temporary credentials of
+# accounts to deploy resources. The format is the following:
+# iam::{DOMAIN_ID}:agency:{AGENCY_NAME}
+INTERMEDIATE_AGENCY_URN = "iam::28e76e9689f340649e1cbbfc927128d3:agency:iac-intermediate-agency"  # noqa:E501
 
 
 def run_terraform_command(args: list[str]):
@@ -38,18 +44,57 @@ def get_ecs_agency_token():
     return ecs_agency_ak, ecs_agency_sk, ecs_agency_token
 
 
-def replace_arguments(filename: str, **kwargs):
-    contents = ""
+def get_intermediate_agency_token(
+        temp_ak: str, temp_sk: str, temp_token: str,
+        agency_urn: str, region: str) -> tuple[str, str, str]:
+    """Use temporary credentials to get the other temporary AK, SK and
+    security token of other agency specified by agency_urn
 
-    with open(filename) as f:
-        contents = f.read()
+    Args:
+        temp_ak (str): Temporary AK
+        temp_sk (str): Temporary SK
+        temp_token (str): Temporary security token
+        agency_urn (str): URN of intermediate agency used to obtain final AK/SK
+        region (str): region code, e.g. 'sa-brazil-1'
 
-    for placeholder, value in kwargs.items():
-        contents = contents.replace(f"{placeholder}_PLACEHOLDER", value)
+    Returns:
+        tuple[str, str, str]: Intermediate agency AK, SK and Security Token
+    """
+    agency_ak, agency_sk, agency_token = None, None, None
+    if temp_ak is None or temp_sk is None or temp_token is None:
+        return None
 
-    output_filename = filename.replace("_template", "")
-    with open(output_filename, 'w') as f:
-        f.write(contents)
+    sig = signer.Signer()
+    sig.Key = temp_ak
+    sig.Secret = temp_sk
+
+    url = f"https://sts.{region}.myhuaweicloud.com/v5/agencies/assume"
+    req = signer.HttpRequest("POST", url)
+    req.headers = {
+        "Content-Type": "application/json",
+        "X-Security-Token": temp_token
+        }
+    payload = {
+        "duration_seconds": 3600,
+        "agency_urn": agency_urn,
+        "agency_session_name": "automation_agency_session"
+    }
+    req.body = json.dumps(payload)
+
+    sig.Sign(req)
+    resp = requests.post(url, headers=req.headers, data=req.body)
+    agency_credentials = resp.json()
+
+    if "credentials" in agency_credentials:
+        agency_ak = agency_credentials["credentials"]["access_key_id"]
+        agency_sk = agency_credentials["credentials"]["secret_access_key"]
+        agency_token = agency_credentials["credentials"]["security_token"]
+    else:
+        print(agency_credentials)
+        msg = "Failed to get temporary credentials of intermediate agency"
+        raise Exception(msg)
+
+    return agency_ak, agency_sk, agency_token
 
 
 if __name__ == "__main__":
@@ -60,26 +105,22 @@ if __name__ == "__main__":
         choices=["plan", "apply", "plan_destroy", "destroy"]
         )
 
-    parser.add_argument(
-        "-b", "--bucket_name", default=None,
-        help="OBS bucket name to store state file remotely"
-    )
-
-    parser.add_argument(
-        "-a", "--account_name", default=None,
-        help="Huawei Cloud account name to deploy resources"
-    )
-
     args = vars(parser.parse_args())
     action_type = args['action_type']
-    bucket_name = args['bucket_name']
-    domain_name = args['account_name']
 
     ecs_agency_ak, ecs_agency_sk, ecs_agency_token = get_ecs_agency_token()
 
-    os.environ["HW_ACCESS_KEY"] = ecs_agency_ak
-    os.environ["HW_SECRET_KEY"] = ecs_agency_sk
-    os.environ["HW_SECURITY_TOKEN"] = ecs_agency_token
+    tf_ak, tf_sk, tf_token = ecs_agency_ak, ecs_agency_sk, ecs_agency_token
+
+    # Intermediate agency demo. Remove/comment the following lines
+    # to use the same ECS agency to run the Terraform code
+    tf_ak, tf_sk, tf_token = get_intermediate_agency_token(
+        ecs_agency_ak, ecs_agency_sk, ecs_agency_token,
+        INTERMEDIATE_AGENCY_URN, "sa-brazil-1")
+
+    os.environ["HW_ACCESS_KEY"] = tf_ak
+    os.environ["HW_SECRET_KEY"] = tf_sk
+    os.environ["HW_SECURITY_TOKEN"] = tf_token
 
     # used by remote state
     os.environ["AWS_ACCESS_KEY_ID"] = ecs_agency_ak
@@ -87,21 +128,6 @@ if __name__ == "__main__":
     os.environ["AWS_SESSION_TOKEN"] = ecs_agency_token
     os.environ["AWS_RESPONSE_CHECKSUM_VALIDATION"] = "when_required"
     os.environ["AWS_REQUEST_CHECKSUM_CALCULATION"] = "when_required"
-
-    os.environ["HW_ASSUME_ROLE_DOMAIN_NAME"] = domain_name
-
-    if os.path.exists(".terraform"):
-        shutil.rmtree(".terraform")
-
-    if bucket_name is not None:
-        replace_arguments(
-            "remote_state.tf_template",
-            BUCKET_NAME=bucket_name,
-            DOMAIN_NAME=domain_name)
-    else:
-        if os.path.exists("remote_state.tf"):
-            os.remove("remote_state.tf")
-            run_terraform_command(["init", "-migrate-state"])
 
     run_terraform_command(["init", "-upgrade"])
 
