@@ -44,6 +44,12 @@ resource "huaweicloud_identity_role" "executor" {
         "obs:::bucket:${var.obs_bucket_name}",
         "obs:::object:${var.obs_bucket_name}/*"
       ]
+    },
+    {
+      "Action": [
+        "iam:tokens:assume"
+      ],
+      "Effect": "Allow"
     }
   ]
 }
