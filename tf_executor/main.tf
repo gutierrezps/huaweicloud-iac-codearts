@@ -1,3 +1,5 @@
+data "huaweicloud_account" "current" {}
+
 resource "huaweicloud_vpc" "executor" {
   name = "vpc-executor"
   cidr = "192.168.0.0/16"

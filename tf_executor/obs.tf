@@ -1,5 +1,3 @@
-data "huaweicloud_account" "current" {}
-
 resource "huaweicloud_obs_bucket" "main" {
   bucket = var.obs_bucket_name
   acl    = "private"
