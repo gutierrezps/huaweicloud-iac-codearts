@@ -15,7 +15,7 @@ INTERMEDIATE_AGENCY_URN = "iam::28e76e9689f340649e1cbbfc927128d3:agency:iac-inte
 
 
 def run_terraform_command(args: list[str]):
-    args = ["terraform"] + args
+    args = ["terraform"] + args + ["-no-color"]
     tf_process = Popen(args, stdout=PIPE, stderr=STDOUT, text=True)
     for line in tf_process.stdout:
         print(line, end="")
