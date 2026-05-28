@@ -7,8 +7,8 @@ terraform {
   }
 }
 
-variable "vpc_cidr" { default = "10.0.0.0/16" }
-variable "subnet_cidr" { default = "10.0.0.0/24" }
+variable "vpc_cidr" {}
+variable "subnet_cidr" {}
 
 resource "huaweicloud_vpc" "main" {
   name = "vpc-main"

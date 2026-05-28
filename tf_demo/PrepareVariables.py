@@ -32,6 +32,16 @@ if __name__ == "__main__":
         help="Huawei Cloud account name to deploy resources"
     )
 
+    parser.add_argument(
+        "--vpc_cidr", required=True,
+        help="CIDR of VPC to be created"
+    )
+
+    parser.add_argument(
+        "--subnet_cidr", required=True,
+        help="CIDR of subnet to be created"
+    )
+
     args = vars(parser.parse_args())
     bucket_name = args['bucket_name']
     domain_name = args['account_name']
@@ -42,6 +52,11 @@ if __name__ == "__main__":
     replace_arguments(
         "providers.tf_template",
         DOMAIN_NAME=domain_name)
+
+    replace_arguments(
+        "terraform.tfvars_template",
+        VPC_CIDR=args['vpc_cidr'],
+        SUBNET_CIDR=args['subnet_cidr'])
 
     if bucket_name is not None:
         replace_arguments(

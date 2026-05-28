@@ -1,0 +1,2 @@
+vpc_cidr = "VPC_CIDR_PLACEHOLDER"
+subnet_cidr = "SUBNET_CIDR_PLACEHOLDER"

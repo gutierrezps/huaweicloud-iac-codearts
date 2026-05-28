@@ -40,7 +40,10 @@ follows:
 # 1. Prepare the Terraform code:
 # - $BUCKET_NAME is the OBS bucket where Terraform state files are stored
 # - $ACCOUNT_NAME is the account name where the resources will be deployed
-python3 PrepareVariables.py -b $BUCKET_NAME -a $ACCOUNT_NAME
+# - $VPC_CIDR example: 10.0.0.0/16
+# - $SUBNET_CIDR example: 10.0.0.0/24
+python3 PrepareVariables.py -b $BUCKET_NAME -a $ACCOUNT_NAME \
+   --vpc_cidr $VPC_CIDR --subnet_cidr $SUBNET_CIDR
 
 # 2. Run Terraform:
 # - $ACTION can be plan, apply, plan_destroy (plan -destroy) or destroy.
