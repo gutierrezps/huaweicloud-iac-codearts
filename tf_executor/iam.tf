@@ -10,6 +10,10 @@ resource "huaweicloud_identityv5_policy" "executor" {
             "sts::setSourceIdentity",
             "sts::tagSession",
             "sts:agencies:assume"
+          ],
+          "Resource": [
+            "iam::*:agency:iac-intermediate-agency",
+            "iam::*:agency:iac-access-agency",
           ]
         },
         {
@@ -17,18 +21,14 @@ resource "huaweicloud_identityv5_policy" "executor" {
           "Action": [
             "iam:tokens:assume"
           ],
-          "Resource": [
-            "iam::*:agencies:iac-intermediate-agency",
-            "iam::*:agencies:iac-access-agency",
-          ]
+          # "Resource": [  # stopped working after 2026-05-29 11h51 AM GMT-03:00
+          #   "iam::*:agencies:iac-intermediate-agency",
+          #   "iam::*:agencies:iac-access-agency",
+          # ]
         },
         {
           "Action": [
-            "obs:bucket:HeadBucket",
-            "obs:bucket:ListBucket",
-            "obs:bucket:GetBucketLocation",
             "obs:object:GetObject",
-            "obs:object:GetObjectVersion",
             "obs:object:PutObject",
             "obs:object:DeleteObject"
           ],
